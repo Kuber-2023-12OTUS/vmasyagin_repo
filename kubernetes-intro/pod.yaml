@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: web
+  namespace: homework
+  labels:
+    app: web
+spec:
+  initContainers:
+  - name: web-init
+    image: busybox:1.36
+    command: ["sh", "-c", "echo \"Victor Masyagin's homework\" >> /init/index.html"]
+    volumeMounts:
+    - name: homework
+      mountPath: /init
+  containers: 
+  - name: web 
+    image: vmasyagin/kubernetes-intro-nginx:0.0.2
+    lifecycle:
+      preStop:
+        exec:
+          command: ["/bin/sh","-c","rm /homework/index.html"]
+    volumeMounts:
+    - name: homework
+      mountPath: /homework
+  volumes:
+  - name: homework
+    emptyDir: {}
