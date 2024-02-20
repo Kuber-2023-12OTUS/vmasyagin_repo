@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  namespace: homework
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: web
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  template:
+    metadata:
+      name: web
+      labels:
+        app: web
+    spec:
+      initContainers:
+      - name: web-init
+        image: busybox:1.36
+        command: ["sh", "-c", "echo \"Victor Masyagin's homework\" >> /init/index.html"]
+        volumeMounts:
+        - name: homework
+          mountPath: /init
+      containers: 
+      - name: web 
+        image: vmasyagin/kubernetes-intro-nginx:0.0.2
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh","-c","rm /homework/index.html"]
+        readinessProbe:
+          exec:
+            command:
+            - cat
+            - /homework/index.html
+        volumeMounts:
+        - name: homework
+          mountPath: /homework
+        - name: cm-volume
+          mountPath: /homework/conf
+      nodeSelector:
+        homework: "true"
+      volumes:
+      - name: homework
+        persistentVolumeClaim:        
+          claimName: web-pvc
+      - name: cm-volume
+        configMap:
+          name: web-cm
