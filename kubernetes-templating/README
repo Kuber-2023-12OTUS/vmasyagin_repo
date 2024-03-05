@@ -1,0 +1,31 @@
+Выполнено ДЗ № 6
+[+] Основное ДЗ
+[+] Задание со *
+
+В процессе сделано:
+- Создан  helm-chart, позволяющий деплоить приложение, полученное в результате выполнения заданий 1-5. Учтены рекомендации из методического указания.
+- Создан helmfile.yaml, описывающий сценарий установки 2 релизов чарта bitnami/kafka с требованиями, описанными в методическом указании.
+
+Как запустить проект:
+- В директории kubernetes-templating/web запускаем команду 
+helm dependency build
+- Из директории kubernetes-templating запускаем команду по установке helm-chart приложения web:
+helm upgrade --install web web -f values.yaml -n homework --create-namespace
+
+Как проверить работоспособность:
+- Выполнить команды: 
+  - kubectl -n homework get all
+  - k -n homework describe role cd
+  - k -n homework describe rolebinding cd
+  - kubectl get storageclasses
+  - k describe clusterrole monitoring
+  - k describe clusterrolebinding monitoring
+  и убедиться, что все сущности приложения успешно созданы 
+- Выполнить запросы:
+  - curl http://homework.otus/metrics.html
+  - curl http://homework.otus/homepage
+  - curl http://homework.otus/conf/file
+  и убедиться, что приложение отвечает на указанные запросы
+
+PR checklist:
+[+] Выставлен label с темой домашнего задания
