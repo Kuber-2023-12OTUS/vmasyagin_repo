@@ -1,0 +1,70 @@
+replicaCount: 3
+
+image:
+  repository: vmasyagin/kubernetes-intro-nginx
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "0.0.2"
+
+podLabels:
+  app: web
+
+service:
+  type: ClusterIP
+  port: 8000
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations: {}
+  hosts:
+    - host: homework.otus
+      paths:
+        - path: /
+          pathType: Prefix
+
+ingressHomepage:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /index.html
+  hosts:
+    - host: homework.otus
+      paths:
+        - path: /homepage
+          pathType: Exact
+
+readinessProbe:
+  exec:
+    command:
+    - cat
+    - /homework/index.html
+
+volumes:
+- name: homework
+  persistentVolumeClaim:        
+    claimName: web-pvc
+- name: cm-volume
+  configMap:
+    name: web-cm
+
+volumeMounts:
+- name: homework
+  mountPath: /homework
+- name: cm-volume
+  mountPath: /homework/conf
+
+nodeSelector:
+  homework: "true"
+
+serviceAccount:
+  name: "monitoring"
+
+## Persist data to a persistent volume
+persistence:
+  storageClass: "custom"
+
+redis:
+  replica:
+    replicaCount: 1
+
