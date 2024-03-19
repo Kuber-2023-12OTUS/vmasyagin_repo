@@ -1,0 +1,52 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: manager-role
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - persistentvolumeclaims
+  - persistentvolumes
+  - services
+  verbs:
+  - create
+  - delete
+  - patch
+  - update
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - create
+  - delete
+  - patch
+  - update
+- apiGroups:
+  - otus.homework
+  resources:
+  - mysqls
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - otus.homework
+  resources:
+  - mysqls/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - otus.homework
+  resources:
+  - mysqls/status
+  verbs:
+  - get
+  - patch
+  - update
