@@ -1,0 +1,20 @@
+Выполнено ДЗ № 8
+[+] Основное ДЗ
+
+В процессе сделано:
+- Создан кастомный образ nginx, отдающий свои метрики на эндпойнте /stub_status
+- В кластере установлен prometheus-operator с помощью helm (helm upgrade --install kube-prometheus oci://registry-1.docker.io/bitnamicharts/kube-prometheus -n monitoring --create-namespace)
+- Созданы манифесты для Deployment и Service для кастомного образа nginx
+- В манифест Deployment добавлен второй контейнер с nginx prometheus exporter
+- Создан манифест ServiceMonitor, описывающий сбор метрик от контейнера с nginx prometheus exporter
+
+Как запустить проект:
+- В директории kubernetes-monitoring запускаем команду "kubectl apply -f ."
+
+Как проверить работоспособность:
+- Убедиться, что созданы нужные сущности (kubectl -n homework get all -l app=nginx-stub-status)
+- Пробросить порт сервиса Prometheus на локальную машину (kubectl -n monitoring port-forward svc/kube-prometheus-prometheus 9090:9090)
+- Зайти в браузере по адресу http://localhost:9090 и убедиться, что метрики nginx prometheus exporter хранятся в Prometheus. Несколько таких метрик для примера: nginx_connections_accepted, nginx_connections_active, nginx_connections_handled, nginx_connections_reading.
+
+PR checklist:
+[+] Выставлен label с темой домашнего задания
