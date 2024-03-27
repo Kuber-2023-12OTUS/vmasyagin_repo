@@ -1,0 +1,27 @@
+Выполнено ДЗ № 7
+[+] Основное ДЗ
+[+] Задание со *
+[+] Задание с **
+
+В процессе сделано:
+- Создан манифест CRD для ресурса с kind MySQL
+- Созданы манифесты ServiceAccount, ClusterRole и ClusterRoleBinding с именем mysql-operator с минимальным набором прав для работы оператора на доступ к API kubernetes 
+- Создан манифест deployment для оператора с образом roflmaoinmysoul/mysql-operator:1.0.0, запускающийся с ServiceAccount mysql-operator
+- Создан манифест кастомного ресурса с kind MySQL, валидный для CRD, созданного ранее
+- Написал собственный оператор с использованием фреймворка operator-sdk, который следит за объектами с типом MySQL (mysqls.otus.homework/v1), создает нужные ресурсы (Deployment, Service, PVC, PV) и удаляет ресурсы после удаления кастомного ресурса
+
+Как запустить проект:
+- В директории kubernetes-operator запускаем команду "kubectl apply -f .". При этом в неймспейсе default у нас запустится под с оператором и оператор в этом же неймспейсе будет создавать дочерние ресурсы кастомного ресурса
+- Для проверки задания с ** нужно сначала выключить предыдущий контроллер (kubectl scale deployment mysql-operator --replicas 0) и из директории kubernetes-operator/mysql-operator выполнить следующие команды
+make install
+make deploy IMG=vmasyagin/mysql-operator:0.0.1
+kubectl -n homework apply -f config/samples/otus_v1_mysql.yaml
+
+Как проверить работоспособность:
+- Убедиться, что в неймспейсе default созданы все необходимые ресурсы (kubectl get all)
+- После удаления кастомного ресурса из кластера (kubectl delete mysqls.otus.homework mysql-object) дочерние ресурсы кастомного ресурса будут также удалены
+- Для проверки задания с ** необходимо проверить, что в неймспейсе homework созданы дочерние ресурсы кастомного ресурса mysql-sample
+- После удаления кастомного ресурса из кластера (kubectl -n homework delete -f config/samples/otus_v1_mysql.yaml) дочерние ресурсы кастомного ресурса будут также удалены
+
+PR checklist:
+[+] Выставлен label с темой домашнего задания
