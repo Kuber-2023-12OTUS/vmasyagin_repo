@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-stub-status
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-stub-status
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  template:
+    metadata:
+      name: nginx-stub-status
+      labels:
+        app: nginx-stub-status
+    spec:
+      containers: 
+      - name: nginx-stub-status 
+        image: vmasyagin/nginx-stub-status:0.0.1
+        readinessProbe:
+          httpGet:
+            path: /stub_status
+            port: 8080
+      - name: nginx-prometheus-exporter
+        args:
+          - "--nginx.scrape-uri=http://localhost:8080/stub_status"
+        image: nginx/nginx-prometheus-exporter:latest
+        ports:
+          - name: metrics
+            containerPort: 9113
+      nodeSelector:
+        homework: "true"
