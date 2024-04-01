@@ -1,0 +1,50 @@
+loki:
+  auth_enabled: false
+  commonConfig:
+    replication_factor: 1
+  storage:
+    bucketNames:
+      chunks: loki-otus
+      ruler: loki-otus
+      admin: loki-otus
+    type: 's3'
+    s3:
+      endpoint: storage.yandexcloud.net
+      secretAccessKey: <SECRET_ACCESS_KEY>
+      accessKeyId: <ACCESS_KEY_ID>
+
+test:
+  enabled: false
+
+monitoring:
+  selfMonitoring:
+    enabled: false
+    grafanaAgent:
+      installOperator: false
+  lokiCanary:
+    nodeSelector:
+      infra: "true"
+    tolerations:
+    - key: "node-role"        
+      operator: "Equal"
+      value: "infra"        
+      effect: "NoSchedule"
+
+singleBinary:
+  replicas: 1
+  nodeSelector:
+    infra: "true"
+  tolerations:
+  - key: "node-role"        
+    operator: "Equal"
+    value: "infra"        
+    effect: "NoSchedule"
+
+gateway:
+  nodeSelector:
+    infra: "true"
+  tolerations:
+  - key: "node-role"        
+    operator: "Equal"
+    value: "infra"        
+    effect: "NoSchedule"
