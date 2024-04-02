@@ -1,0 +1,25 @@
+Выполнено ДЗ № 9
+[+] Основное ДЗ
+
+В процессе сделано:
+- Был развернут Managed Kubernetes в Yandex cloud
+- Были созданы 2 пула нод в кластере: под рабочую нагрузку (workload="true") и для инфраструктурных сервисов (infra="true")
+- Для инфраструктурных нод добавлен taint "node-role=infra:NoSchedule" 
+- Создан бакет s3 jbject storage Yandex cloud, создан сервисный аккаунт с ролью storage.editor и получен ключ доступа 
+- В кластере установлен Loki с помощью helm-чарта
+- В кластере установлен Promtail с помощью helm-чарта
+- В кластере установлена Grafana с помощью helm-чарта
+- В Grafana настроен data source к loki
+
+Как запустить проект:
+- Добавить репозиторий с helm-чартами grafana: helm repo add grafana https://grafana.github.io/helm-charts
+- В директории kubernetes-logging запускаем команду "helm upgrade --values loki/values.yaml --install loki --namespace=loki grafana/loki --create-namespace". При этом в неймспейсе loki будет развернут chart grafana/loki 
+- В директории kubernetes-logging запускаем команду "helm upgrade --values promtail/values.yaml --install promtail --namespace=loki grafana/promtail". При этом в неймспейсе loki будет развернут chart grafana/promtail
+- В директории kubernetes-logging запускаем команду "helm upgrade --values grafana/values.yaml --install grafana --namespace=loki grafana/grafana". При этом в неймспейсе loki будет развернут chart grafana/grafana 
+
+Как проверить работоспособность:
+- Убедиться, что ноды в кластере сконфигурированы нужным образом, открыв файл "kubernetes-logging/commands.out", в котором приложен вывод команд "kubectl get node -o wide --show-labels" и "kubectl get nodes -o custom-columns=NAME:.metadata.name,TAINTS:.spec.taints"
+- Убедиться, что корректно установлены чарты loki, promtail grafana и настроен data source к loki, посмотрев скриншоты экрана (kubernetes-logging/screenshots/grafana_explore_loki_datasource1.png, kubernetes-logging/screenshots/grafana_explore_loki_datasource2.png) и ознакомившись с values-файлами, переопределяющими дефолтные values-файлы чартов (лежат в директориях kubernetes-logging/loki, kubernetes-logging/promtail и kubernetes-logging/grafana).
+
+PR checklist:
+[+] Выставлен label с темой домашнего задания
