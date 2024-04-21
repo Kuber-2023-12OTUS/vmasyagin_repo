@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: csi-s3-otus-nginx
+  namespace: default
+spec:
+  containers:
+   - name: csi-s3-otus-nginx
+     image: nginx
+     volumeMounts:
+       - mountPath: /usr/share/nginx/html/s3
+         name: csi-s3-otus-homework
+  volumes:
+   - name: csi-s3-otus-homework
+     persistentVolumeClaim:
+       claimName: csi-s3-pvc
+       readOnly: false
