@@ -1,0 +1,28 @@
+Выполнено ДЗ № 12
+[+] Основное ДЗ
+
+В процессе сделано:
+- Был развернут Managed Kubernetes в Yandex cloud
+- Создан бакет в s3 Object Storage Yandex cloud, создан сервисный аккаунт с ролью storage.editor и сгенерирован ключ доступа 
+- Создан и применен манифест Secret с ключами для доступа к Object Storage
+- Создан и применен манифест StorageClacc, описывающий класс хранилища
+- В кластере установлен CSI драйвер на базе GeeseFS для установки бакетов S3 как PersistentVolumes
+- Создан и применен манифест PersistentVolumeClaim, использующий для хранения созданный StorageClass с механизмом autoProvisioning
+- создан и применен манифест Pod, использующий созданный ранее PVC в качестве Volume и монтирующий его в контейнер пода
+
+Как запустить проект:
+- Добавить репозиторий с helm-чартами yandex-s3 и установить chart: 
+    helm repo add yandex-s3 https://yandex-cloud.github.io/k8s-csi-s3/charts
+    helm install csi-s3 yandex-s3/csi-s3
+- В директории kubernetes-csi запускаем команду: "kubectl apply -f ."
+
+Как проверить работоспособность:
+- Проверить, что созданный PVC находится в статусе Bound: "kubectl get pvc csi-s3-pvc"
+- Проверить, что Volume был успешно примонтирован в контейнер:
+  > kubectl exec -ti csi-s3-otus-nginx -- bash
+  > mount | grep fuse
+  csi-s3-otus-homework on /usr/share/nginx/html/s3 type fuse.geesefs (rw,nosuid,nodev,relatime,user_id=65534,group_id=0,default_permissions,allow_other)
+  > touch /usr/share/nginx/html/s3/hello_world
+
+PR checklist:
+[+] Выставлен label с темой домашнего задания
