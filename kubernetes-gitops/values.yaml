@@ -1,0 +1,12 @@
+## Globally shared configuration
+global:
+  # -- Default node selector for all components
+  nodeSelector:
+    infra: "true"
+
+  # -- Default tolerations for all components
+  tolerations:
+    - key: "node-role"        
+      operator: "Equal"
+      value: "infra"        
+      effect: "NoSchedule"

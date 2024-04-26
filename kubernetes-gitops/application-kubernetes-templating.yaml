@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kubernetes-templating
+  namespace: argocd
+spec:
+  project: otus
+  source:
+    repoURL: https://github.com/Kuber-2023-12OTUS/vmasyagin_repo.git
+    targetRevision: HEAD
+    path: kubernetes-templating/web
+    helm:
+      releaseName: web
+      valueFiles:
+        - ../values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: homeworkhelm
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - ApplyOutOfSyncOnly=true
+    - CreateNamespace=true
