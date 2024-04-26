@@ -1,0 +1,24 @@
+# Server, when enabled, configures a server cluster to run. This should
+# be disabled if you plan on connecting to a Consul cluster external to
+# the Kube cluster.
+server:
+  # If true, the chart will install all the resources necessary for a
+  # Consul server cluster. If you're running Consul externally and want agents
+  # within Kubernetes to join that cluster, this should probably be false.
+  # @default: global.enabled
+  # @type: boolean
+  enabled: "-"
+
+  # Override global log verbosity level. One of "trace", "debug", "info", "warn", or "error".
+  # @type: string
+  logLevel: ""
+
+  # The name of the Docker image (including any tag) for the containers running
+  # Consul server agents.
+  # @type: string
+  image: null
+
+  # The number of server agents to run. This determines the fault tolerance of
+  # the cluster. Please refer to the [deployment table](https://developer.hashicorp.com/consul/docs/architecture/consensus#deployment-table)
+  # for more information.
+  replicas: 3
