@@ -9,6 +9,22 @@ image:
 podLabels:
   app: web
 
+podSecurityContext:
+  fsGroup: 1001
+  fsGroupChangePolicy: Always
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: false
+  runAsGroup: 0
+  runAsNonRoot: true
+  runAsUser: 1001
+  seccompProfile:
+    type: RuntimeDefault
+
 service:
   type: ClusterIP
   port: 8000

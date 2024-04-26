@@ -34,6 +34,7 @@ spec:
               command: ["/bin/sh","-c","rm /homework/index.html"]
         readinessProbe:
           httpGet:
+            port: 8000
             path: /index.html
         volumeMounts:
         - name: homework
