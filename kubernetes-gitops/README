@@ -1,0 +1,29 @@
+Выполнено ДЗ № 10
+[+] Основное ДЗ
+
+В процессе сделано:
+- В неймспейсе argocd был установлен Argo CD с помощью helm-чарта
+- Создан и применени манифест для кастомного ресурса AppProject с именем otus, у которого в качестве источника указан репозиторий с ДЗ курса
+- Создан и применени манифест для кастомного ресурса Application с именем kubernetes-networks, описывающий инсталляцию приложения из ДЗ kubernetes-networks в неймспейс homework
+- Создан и применени манифест для кастомного ресурса Application с именем kubernetes-templating, описывающий инсталляцию приложения из ДЗ kubernetes-templating в неймспейс homeworkhelm
+
+Как запустить проект:
+- Добавить репозиторий argo с helm-чартами Argo CD: 
+    helm repo add argo https://argoproj.github.io/argo-helm
+- Перейти в директорию kubernetes-gitops и установить chart:
+    helm upgrade --install argocd argo/argo-cd -f values.yaml -n argocd --create-namespace
+- В директории kubernetes-gitops последовтиаельно запускаем команды: 
+    kubectl apply -f appprohect.yaml
+    kubectl apply -f application-kubernetes-networks.yaml
+    kubectl apply -f application-kubernetes-templating.yaml
+
+Как проверить работоспособность:
+- Проверить, что приложение из ДЗ kubernetes-networks успешно установлено в неймспейсе homework:
+    kubectl -n homework get all
+  Важно: так как политика синхронизации для данного приложения ручная, то необходимо самостоятельно запустить синхронизацию. 
+  Сделать это можно либо через ui, либо выполнив команду "argocd app sync kubernetes-networks"
+- Проверить, что приложение из ДЗ kubernetes-templating успешно установлено в неймспейсе homeworkhelm:
+    kubectl -n homeworkhelm get all
+
+PR checklist:
+[+] Выставлен label с темой домашнего задания
