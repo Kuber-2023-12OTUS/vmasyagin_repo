@@ -62,7 +62,7 @@ serviceAccount:
 
 ## Persist data to a persistent volume
 persistence:
-  storageClass: "custom"
+  storageClass: "-"
 
 redis:
   replica:
