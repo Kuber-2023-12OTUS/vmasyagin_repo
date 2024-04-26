@@ -1,0 +1,73 @@
+Выполнено ДЗ № 11
+[+] Основное ДЗ
+
+В процессе сделано:
+- В неймспейсе consul был развернут consul из helm-чарта с 3 репликами для сервера
+- В неймспейсе vault был развернут vault из helm-чарта для использования consul в режиме HA
+- Выполнена инициализация vault и распечатаны все поды хранилища
+- Создано хранилище секретов otus с Secret Engine KV, в нем создан секрет otus/cred с содержанием из методического указания
+- В неймспейсе vault создан сервисный аккаунт vault-auth и ClusterRoleBinding для него с ролью system:auth-delegator
+- В Vault включена авторизация auth/kubernetes и сконфигурирована на использование токена и сертификата ранее созданного аккаунта
+- В Vault создана и применена политика otus-policy для секрета otus/cred
+- В Vault создана роль auth/kubernetes/role/otus, связывающая ServiceAccount vault-auth из неймспейса vault с политикой otus-policy
+- Установлен External Secrets Operator из helm-чарта в неймспейс vault
+- Создан и применен манифест кастомного ресурса SecretStore, сконфигурированный для доступа к KV секретам Vault и сервисный аккаунт vault-auth
+- Создан и применен манифест кастомного ресурса ExternalSecret по описанию из методического указания
+
+Как запустить проект:
+- Перейти в директорию kubernetes-vault, склонировать репозиторий с helm-чартом consul и установить chart: 
+    git clone git@github.com:hashicorp/consul-k8s.git
+    helm upgrade --install consul consul-k8s/charts/consul/ --set global.name=consul --create-namespace -n consul -f values-consul.yaml
+- В директории kubernetes-vault склонировать репозиторий с helm-чартом vault и установить chart:
+    git clone git@github.com:hashicorp/vault-helm.git
+    helm install vault vault-helm/ --create-namespace -n vault -f values-vault.yaml
+- Выполнить инициализацию Vault:
+    kubectl -n vault exec -it vault-0 -- vault operator init
+- Распечатать все поды хранилища:
+    kubectl -n vault exec -it vault-{0,1,2} -- vault operator unseal <UNSEAL_KEY_{1,2,3}>
+- Авторизоваться в Vault полученным при инициализации токеном:
+    kubectl -n vault exec -it vault-0 -- vault login <INITIAL_ROOT_TOKEN>
+- Создать хранилище секретов otus с Secret Engine KV:
+    kubectl -n vault exec -it vault-0 -- vault secrets enable -version=2 -path=otus kv
+- Создать секрет otus/cred и положить в него данные из методического указания:
+    kubectl -n vault exec -it vault-0 -- vault kv put otus/cred username='otus' password='asajkjkahs'
+- В директории последовательно выполнить команды:
+    kubectl apply -f sa.yaml
+    kubectl apply -f crb.yaml
+- В Vault включить авторизацию auth/kubernetes:
+    kubectl -n vault exec -it vault-0 -- vault auth enable kubernetes
+- Сконфигурировать авторизацию kubernetes на использование токена и сертификата ранее созданного аккаунта:
+    TOKEN_REVIEW_JWT=$(kubectl -n vault get secret vault-auth-token -o go-template='{{ .data.token }}' | base64 --decode)
+    KUBE_CA_CERT=$(kubectl config view --raw --minify --flatten -o jsonpath='{.clusters[].cluster.certificate-authority-data}' | base64 --decode)
+    KUBE_HOST=$(kubectl config view --raw --minify --flatten --output='jsonpath={.clusters[].cluster.server}')
+    kubectl -n vault exec -it vault-0 -- vault write auth/kubernetes/config \
+    token_reviewer_jwt="$TOKEN_REVIEW_JWT" \
+    kubernetes_host="$KUBE_HOST" \
+    kubernetes_ca_cert="$KUBE_CA_CERT" \
+    disable_local_ca_jwt="true"
+- Находясь в директории kubernetes-vault Создать и применить в Vault политику otus-policy для секрета otus/cred
+    cat otus-policy.hcl | kubectl -n vault exec -it vault-0 -- vault policy write otus-policy -
+- В Vault создать роль auth/kubernetes/role/otus:
+      kubectl -n vault exec -it vault-0 -- vault write auth/kubernetes/role/otus \
+        bound_service_account_names=vault-auth \
+        bound_service_account_namespaces=vault \
+        policies=otus-policy \
+        ttl=24h
+- Добавить репозиторий external-secrets с helm-чартами external-secrets и установить chart:
+    helm repo add external-secrets https://charts.external-secrets.io
+    helm upgrade --install external-secrets external-secrets/external-secrets --create-namespace -n vault
+- В директории kubernetes-vault выполнить команду:
+    kubectl apply -f secretstore.yaml
+- В директории kubernetes-vault выполнить команду:
+    kubectl apply -f externalsecret.yaml
+
+Как проверить работоспособность:
+- Проверить, что запустились все поды в неймспейсе consul:
+    kubectl -n consul get po
+- Проверить, что запустились все поды в неймспейсе vault:
+    kubectl -n vault get po
+- Проверить, что в неймспейсе vault появился секрет otus-cred, хранящий ключи username и password со значениями, взятыми из секрета otus/cred в Vault
+    kubectl -n vault get secret otus-cred -o go-template='{{range $k,$v := .data}}{{printf "%s: " $k}}{{if not $v}}{{$v}}{{else}}{{$v | base64decode}}{{end}}{{"\n"}}{{end}}'
+
+PR checklist:
+[+] Выставлен label с темой домашнего задания
