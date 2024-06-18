@@ -1,0 +1,48 @@
+Выполнено ДЗ № 13
+[+] Основное ДЗ
+[+] Задание со *
+
+В процессе сделано:
+- Создан манифест, описывающий pod с distroless образом kyos0109/nginx-distroless для создания контейнера и применен в кластере
+- С помощью команды kubectl debug создан эфемерный контейнер для отладки этого пода.
+- Получен доступ к файловой системе отлаживаемого контейнера из эфемерного. К результатам ДЗ приложен вывод команды ls –la для директории /etc/nginx
+- В отладочном контейнере запущена команда "tcpdump -nn -i any -e port 80", результаты отладки приложены к ДЗ
+- Создан отладочный контейнер для ноды, на которой запущен под с distroless nginx
+- Получен доступ к файловой системе ноды. К результатам ДЗ риложены логи пода с distrolles nginx
+- Выполнена команда strace для корневого процесса nginx в поде с distrolles nginx
+
+Как запустить проект:
+- В директории kubernetes-debug запускаем команду: "kubectl apply -f pod.yaml"
+- Выполняем команду ниже и попадаем в терминал отладочного контейнера
+  kubectl debug -it nginx --image=dockersec/tcpdump --target nginx -- sh
+- Переходим в файловую систему отлаживаемого контейнера
+  cd /proc/1/root
+- Далее выполняем команду "ls –la etc/nginx"
+- В отладочном контейнере запускаем команду "tcpdump -nn -i any -e port 80"
+- Выполняем команду "kubectl port-forward pod/nginx 8080:80" на локальном компьютере
+- Выполняем несколько сетевых обращений к nginx в отлаживаемом поде. Например, перейдя в браузере по адресу http://localhost:8080/
+- Создаем отладочный контейнер для ноды, на которой запущен под с distroless nginx (в моем случае нода имеет имя cl1maqm9qr23tppvi6r1-iroh)
+  kubectl debug node/cl1maqm9qr23tppvi6r1-iroh -it --image=ubuntu
+- Получаем доступ к файлово системе ноды
+  cd /host
+- Далее выполняем команду "ls -la var/log/containers" и определяем, где находится логи пода с distrolles nginx. В моем случае это "var/log/pods/debug_nginx_5c24c283-03da-4715-9313-5b8bc7d3961f/nginx/0.log"
+- Для выполнения команды strace для корневого процесса nginx в поде с distrolles nginx выполняем команду
+  kubectl debug -it nginx --image=nicolaka/netshoot --profile=general --target nginx -- sh
+- Внутри отладочного контейнера выполняем команду и получаем следующий вывод
+  ~ # ps aux
+  PID   USER     TIME  COMMAND
+      1 root      0:00 nginx: master process nginx -g daemon off;
+      8 bird      0:00 nginx: worker process
+     37 root      0:00 sh
+     43 root      0:00 ps aux
+- Выполняем команду strace для корневого процесса nginx 
+  strace -p 1
+
+Как проверить работоспособность:
+- Проверить, что результат выполнения команды "ls -la etc/nginx" совпадает с содержимым файла kubernetes-debug/ls.out
+- Проверить, что в результате выполнения сетевых обращений к nginx в отлаживаемом поде результат будет похож на содержимое файла kubernetes-debug/tcpdump.out
+- Проверить, что логи пода с distrolles nginx будут коррелировать с логами из файла kubernetes-debug/nginx.log
+- Проверить, что вывод команды "strace -p 1" для корневого процесса nginx совпадает с содержимым из файла kubernetes-debug/strace.out 
+
+PR checklist:
+[+] Выставлен label с темой домашнего задания
