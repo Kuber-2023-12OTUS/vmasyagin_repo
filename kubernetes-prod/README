@@ -1,0 +1,110 @@
+Выполнено ДЗ № 14
+[+] Основное ДЗ
+[+] Задание со *
+
+В процессе сделано:
+- Созданы 4 виртуальные машины в YC указанной конфигурации для разворачивания и обновления кластера Kubernetes с помощью kubeadm 
+- На всех машинах проведены подготовительные работы в соответствии с инструкцией
+- На всех ВМ установлены containerd, kubeadm, kubelet, kubectl. Последние 3 компонента версии 1.29.0-1.1
+- В качестве сетевого плагина был установлен Flannel
+- На мастер-ноде проинициализирован кластер Kubernetes версии 1.29 и присоединены 3 воркер ноды
+- Выполнено обновление мастер-ноды до последней актуальной версии Kubernets с помощью kubeadm
+- Последовательно были выведены из планирования все воркер-ноды, обновлены до последней актуальной версии и были возвращены в планирование
+- Созданы 5 виртуальных машин в YC указанной конфигурации для разворачивания кластера Kubernetes с помощью kubespray
+- Был развернут отказоустойчивый кластер Kubernetes с помощью kubespray
+
+Как запустить проект:
+- Переходим в директорию kubernetes-prod
+  cd kubernetes-prod
+- Копируем скрипт prepare_node.sh на все виртуальные машины в домашнюю директорию пользователя
+  scp prepare_node.sh <user>@<vm_ip>:~
+- Запускаем на каждой машине скрипт:
+  cd ~ && chmod +x prepare_node.sh && sudo ./prepare_node.sh
+Следующие действия производим на мастер-ноде
+- Запускаем команду инициализации кластера
+  kubeadm init --pod-network-cidr=10.244.0.0/16
+- Копируем конфиг для kubectl
+  mkdir -p $HOME/.kube
+  cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  chown $(id -u):$(id -g) $HOME/.kube/config
+- Установливаем Flannel в качестве сетевого плагина
+  kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+- На воркер-нодах выполняем команду присоединения в кластер командой, которая была выдана в конце "kubeadm init"
+  sudo kubeadm join <IP_ADDRESS>:6443 --token <TOKEN> --discovery-token-ca-cert-hash sha256:<HASH>
+- Выполняем команду "kubectl get nodes -o wide"
+- Копируем скрипт upgrade_kubeadm.sh на все ноды кластера в домашнюю директорию пользователя
+  scp upgrade_kubeadm.sh <user>@<vm_ip>:~
+Следующие действия производим на мастер-ноде
+- Запускаем скрипт обновления kubeadm
+  cd ~ && chmod +x upgrade_kubeadm.sh && sudo ./upgrade_kubeadm.sh
+- Проверяем план обновления кластера
+  sudo kubeadm upgrade plan
+- Запускаем обновление кластера до версии 1.30.2
+  sudo kubeadm upgrade apply v1.30.2
+- Выводим из планирования ноду
+  kubectl drain <master-node-name> --ignore-daemonsets
+- Обновляем kubelet и kubectl
+  sudo apt-mark unhold kubelet kubectl && \
+  sudo apt-get update && sudo apt-get install -y kubelet='1.30.2-1.1' kubectl='1.30.2-1.1' && \
+  sudo apt-mark hold kubelet kubectl
+- Рестартуем kubelet
+  sudo systemctl daemon-reload
+  sudo systemctl restart kubelet
+- Возвращаем в планирование ноду
+  kubectl uncordon <master-node-name>
+- Обновляем локальную конфигурацию kubelet на воркер-нодах
+  sudo kubeadm upgrade node
+Следующие команды выполняем последовательно на каждой воркер-ноде. Опишем процесс для одной ноды
+- На воркер-ноде запускаем скрипт обновления kubeadm
+  cd ~ && chmod +x upgrade_kubeadm.sh && sudo ./upgrade_kubeadm.sh
+- На мастер-ноде запускаем команду вывода из планирования воркер-ноды
+  kubectl drain <worker-node-name> --ignore-daemonsets
+- Обновляем kubelet и kubectl на воркер-ноде
+  sudo apt-mark unhold kubelet kubectl && \
+  sudo apt-get update && sudo apt-get install -y kubelet='1.30.2-1.1' kubectl='1.30.2-1.1' && \
+  sudo apt-mark hold kubelet kubectl
+- Рестартуем kubelet на воркер-ноде
+  sudo systemctl daemon-reload
+  sudo systemctl restart kubelet
+- На мастер-ноде запускаем команду возвращения в планирование воркер-ноды
+  kubectl uncordon <worker-node-name>
+- После обновления всех воркер-нод запускам команду "kubectl get nodes -o wide"
+  
+Следующие шаги описывают процесс разворачивания отказоустойчивого кластера Kubernetes с помощью kubespray. Все шаги выполняем на первой мастер-ноде
+- Устанавливаем необходимые для работы ansible пакеты
+  sudo apt-get install -y python3
+  sudo apt-get install -y python3-pip
+  sudo apt-get install -y python3-venv
+- Устанавливаем ansible
+  VENVDIR=kubespray-venv
+  KUBESPRAYDIR=kubespray
+  python3 -m venv $VENVDIRye
+  source $VENVDIR/bin/activate
+  cd $KUBESPRAYDIR
+  pip install -U -r requirements.txt
+- Клонируем репозиторий kubespray
+  git clone https://github.com/kubernetes-sigs/kubespray.git
+- Переходим в склонированный репозиторий
+  cd kubespray
+- Копируем пример инвентаря в директорию для инвентарных файлов нашего кластера mycluster 
+  cp -rfp inventory/sample inventory/mycluster
+- Генерируем пару ключей
+  mkdir keys
+  ssh-keygen -t rsa -f "$(pwd)/keys/id_rsa" -P ""
+- Добавляем публичный ключ $(pwd)/keys/id_rsa.pub на все машины кластера (файл ~/.ssh/authorized_keys)
+- Обновляем данными по ip-адресам машин кластера инвентарный файл kubespray inventory/mycluster/inventory.ini. Инвентарный файл лежит по пути kubernetes-prod/inventory.ini
+- Запускаем плейбук по разворачиванию кластера
+  ansible-playbook -i inventory/mycluster/inventory.ini --become --become-user=root ansible_ssh_private_key_file=keys/id_rsa cluster.yml
+- Копируем конфиг для kubectl
+  mkdir -p $HOME/.kube
+  cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+  chown $(id -u):$(id -g) $HOME/.kube/config
+- Выполняем команду "kubectl get nodes -o wide"
+
+Как проверить работоспособность:
+- Проверить, что результат выполнения команды "kubectl get nodes -o wide" после разворачивания кластера версии 1.29.0 с помощью kubeadm коррелирует с содержимым файла kubernetes-prod/kubeadm.nodes.v1.29
+- Проверить, что результат выполнения команды "kubectl get nodes -o wide" после обновления кластера с помощью kubeadm до версии 1.30.2 коррелирует с содержимым файла kubernetes-prod/kubeadm.nodes.v1.30
+- Проверить, что результат выполнения команды "kubectl get nodes -o wide" после разворачивания кластера с помощью kubespray коррелирует с содержимым файла kubernetes-prod/kubespray.nodes
+
+PR checklist:
+[+] Выставлен label с темой домашнего задания
