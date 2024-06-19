@@ -1,0 +1,2 @@
+strace: Process 1 attached
+rt_sigsuspend([], 8
