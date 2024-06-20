@@ -1,0 +1,6 @@
+NAME    STATUS   ROLES           AGE   VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE           KERNEL-VERSION     CONTAINER-RUNTIME
+node1   Ready    control-plane   87m   v1.29.5   10.128.0.13   <none>        Ubuntu 24.04 LTS   6.8.0-35-generic   containerd://1.7.16
+node2   Ready    control-plane   86m   v1.29.5   10.128.0.8    <none>        Ubuntu 24.04 LTS   6.8.0-35-generic   containerd://1.7.16
+node3   Ready    control-plane   86m   v1.29.5   10.128.0.18   <none>        Ubuntu 24.04 LTS   6.8.0-35-generic   containerd://1.7.16
+node4   Ready    <none>          85m   v1.29.5   10.128.0.23   <none>        Ubuntu 24.04 LTS   6.8.0-35-generic   containerd://1.7.16
+node5   Ready    <none>          85m   v1.29.5   10.128.0.21   <none>        Ubuntu 24.04 LTS   6.8.0-35-generic   containerd://1.7.16
